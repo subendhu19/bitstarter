@@ -14,7 +14,7 @@ fs.readFileSync('./index.html','utf8', function read (err,data) {
 console.log(content)
 
 app.get('/', function(request, response) {
-  response.send(content)
+  response.send("content")
 })
 
 app.listen(app.get('port'), function() {

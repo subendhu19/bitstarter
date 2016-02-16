@@ -4,7 +4,7 @@ var app = express()
 app.set('port', (process.env.PORT || 5000))
 app.use(express.static(__dirname + '/public'))
 
-var string = fs.readFileSync('index.html','utf-8', (err,data) => {
+var string = fs.readFileSync('index.html','utf8', (err,data) => {
     if (err) throw err;
     console.log(data);
 });

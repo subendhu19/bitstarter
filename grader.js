@@ -34,21 +34,32 @@ var cheerioHtmlFile = function(htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
 };
 
-var loadHtmlUrl = function(url) {
+var loadHtmlUrl = function(url, callback) {
     var html_string = rest.get(url).on('complete', function(result) {
 	if (result instanceof Error) {
 	    console.log('Error: ', result.message);
 	    process.exit(1);
 	} else {
-	    console.log(result);
+	    callback(result);
 	}
     });
-    return html_string;
 };
 
 
-var cheerioUrl = function(url) {
-    return cheerio.load(loadHtmlUrl(url));
+var cheerioUrl = function(url, checksfile) {
+    var html_string = null;
+    loadHtmlUrl(url, function(result) {
+	html_string = result;
+	$=cheerio.load(html_string);
+	var checks = loadChecks(checksfile).sort();
+	var out = {};
+	for (var ii in checks) {
+	    var present = $(checks[ii]).length > 0;
+	    out[checks[ii]] = present;
+	}
+	var outJson = JSON.stringify(out, null, 4);
+	console.log(outJson);
+    });
 };
 
 var loadChecks = function(checksfile) {
@@ -57,17 +68,6 @@ var loadChecks = function(checksfile) {
 
 var checkHtmlFile = function(htmlfile, checksfile) {
     $ = cheerioHtmlFile(htmlfile);
-    var checks = loadChecks(checksfile).sort();
-    var out = {};
-    for (var ii in checks) {
-	var present = $(checks[ii]).length > 0;
-	out[checks[ii]] = present;
-    }
-    return out;
-};
-
-var checkUrl= function(url, checksfile) {
-    $=cheerioUrl(url);
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for (var ii in checks) {
@@ -88,15 +88,15 @@ if(require.main == module) {
 	.option('-u, --url <url_path>', 'Url link')
 	.parse(process.argv);
     if (program.file) {
-	console.log('In file parse');
+	//console.log('In file parse');
 	var checkJson = checkHtmlFile(program.file, program.checks);
+	var outJson = JSON.stringify(checkJson, null, 4);
+	console.log(outJson);
     }
     if (program.url) {
-	console.log('In url parse');
-	var checkJson = checkUrl(program.url, program.checks);
-    }
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+	//console.log('In url parse');
+	cheerioUrl(program.url, program.checks);
+    }    
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
